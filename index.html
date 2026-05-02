@@ -1,151 +1,197 @@
-import React, { useState, useEffect } from 'react';
-import { Share, MapPin, Calendar, ExternalLink, Download, Info } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>八王子周辺おでかけナビ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap');
+        body { font-family: 'Noto Sans JP', sans-serif; background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .active-area { background-color: #1d4ed8 !important; color: white !important; border-color: #1d4ed8 !important; }
+        .active-date { background-color: #2563eb !important; color: white !important; transform: scale(1.05); z-index: 10; }
+    </style>
+</head>
+<body class="pb-24">
 
-const eventsData = [
-  { id: 1, title: "東京たま大恐竜博", location: "東京たま未来メッセ", area: "hachioji", dates: ["4/29", "4/30", "5/1", "5/2", "5/3", "5/4", "5/5", "5/6"], displayDate: "4/29〜5/6", description: "12種類の実物大恐竜が動く！GW最大の恐竜イベント。", tag: "大型", color: "bg-red-500", url: "https://www.google.com/search?q=東京たま大恐竜博" },
-  { id: 2, title: "フラワーフェスティバル", location: "国営昭和記念公園", area: "tachikawa", dates: ["4/29", "5/2", "5/3", "5/4", "5/5", "5/6"], displayDate: "GW中", description: "ネモフィラが見頃！ふわふわ遊具やポニー乗馬も。", tag: "自然", color: "bg-green-500", url: "https://www.showakinen-koen.jp/" },
-  { id: 3, title: "レゴ®ワークショップ", location: "ららぽーと立川立飛", area: "tachikawa", dates: ["5/2", "5/3", "5/4", "5/5", "5/6"], displayDate: "5/2〜5/6", description: "組み立てたレゴを持ち帰れる！参加無料。", tag: "体験", color: "bg-blue-500", url: "https://mitsui-shopping-park.com/lalaport/tachikawa/" },
-  { id: 4, title: "ドームプラネット", location: "イオンモール多摩平の森", area: "tamadaira", dates: ["4/29", "4/30", "5/1", "5/2"], displayDate: "〜5/2", description: "360度ドーム映像で海の世界を体験！", tag: "映像", color: "bg-teal-500", url: "https://tamadairanomori-aeonmall.com/" },
-  { id: 5, title: "はたらく車が大集合", location: "アリオ橋本", area: "hashimoto", dates: ["5/3", "5/4"], displayDate: "5/3・4", description: "パトカーや消防車に乗って写真撮影！", tag: "乗物", color: "bg-orange-500", url: "https://hashimoto.ario.jp/" },
-  { id: 6, title: "GWファミリーサーカス", location: "昭島モリタウン", area: "akishima", dates: ["5/4", "5/5"], displayDate: "5/4・5", description: "アクロバットショーを無料観覧。", tag: "ショー", color: "bg-purple-500", url: "https://www.moritown.com/" },
-  { id: 7, title: "さわれる恐竜展", location: "イオンモールむさし村山", area: "musashimurayama", dates: ["4/29", "5/2", "5/3", "5/4", "5/5", "5/6"], displayDate: "4/29〜5/6", description: "本物の化石に触れる体験や恐竜展示。", tag: "展示", color: "bg-emerald-600", url: "https://musashimurayama-aeonmall.com/" },
-  { id: 8, title: "アンパンマン ショー", location: "セレオ八王子 屋上", area: "hachioji", dates: ["5/4"], displayDate: "5/4", description: "観覧無料（整理券制）。雨天中止注意。", tag: "ショー", color: "bg-red-600", url: "https://www.celeo.co.jp/hachioji/" },
-  { id: 9, title: "パンまつり & ワークショップ", location: "三井アウトレット 多摩南大沢", area: "hachioji", dates: ["5/3", "5/4", "5/5"], displayDate: "5/3〜5", description: "人気のパン屋が集結！子供向け体験も。", tag: "体験", color: "bg-amber-600", url: "https://mitsui-shopping-park.com/mop/tama/" },
-  { id: 10, title: "サンリオグリーティング", location: "多摩センター駅前", area: "tama", dates: ["5/2", "5/5"], displayDate: "5/2・5", description: "駅前広場でのグリーティングイベント。", tag: "キッズ", color: "bg-pink-500", url: "https://www.puroland.jp/" }
-];
-
-const areas = [
-  { id: 'all', label: 'すべて' },
-  { id: 'hachioji', label: '八王子・南大沢' },
-  { id: 'tachikawa', label: '立川・公園' },
-  { id: 'tama', label: '多摩センター' },
-  { id: 'tamadaira', label: '多摩平' },
-  { id: 'musashimurayama', label: '武蔵村山' },
-  { id: 'akishima', label: '昭島' },
-  { id: 'hashimoto', label: '橋本' },
-];
-
-export default function App() {
-  const [selectedArea, setSelectedArea] = useState('all');
-  const [selectedDate, setSelectedDate] = useState(null);
-
-  const filteredEvents = eventsData.filter(event => {
-    const areaMatch = selectedArea === 'all' || event.area === selectedArea;
-    const dateMatch = !selectedDate || event.dates.includes(selectedDate);
-    return areaMatch && dateMatch;
-  });
-
-  const dates = ["4/29", "4/30", "5/1", "5/2", "5/3", "5/4", "5/5", "5/6"];
-
-  return (
-    <div className="min-h-screen bg-slate-50 pb-20 font-sans">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-blue-600 px-4 py-3 text-white shadow-md">
-        <div className="mx-auto flex max-w-lg items-center justify-between">
-          <h1 className="text-lg font-bold flex items-center gap-2">
-            <span>🏠</span> 八王子周辺GWナビ
-          </h1>
+    <header class="sticky top-0 z-50 bg-blue-600 px-4 py-3 text-white shadow-lg">
+        <div class="mx-auto max-w-lg">
+            <h1 class="text-lg font-black flex items-center gap-2">
+                <span class="text-2xl">📍</span> 八王子周辺おでかけナビ
+            </h1>
+            <p class="text-[10px] opacity-80">今日から1週間のイベントを自動更新中</p>
         </div>
-      </header>
+    </header>
 
-      <main className="mx-auto max-w-lg p-3">
-        {/* Area Tabs */}
-        <div className="no-scrollbar mb-4 flex gap-2 overflow-x-auto py-1">
-          {areas.map(area => (
-            <button
-              key={area.id}
-              onClick={() => setSelectedArea(area.id)}
-              className={`whitespace-nowrap rounded-full border px-4 py-2 text-xs transition-all active:scale-95 ${
-                selectedArea === area.id
-                  ? 'border-blue-700 bg-blue-800 text-white font-bold shadow-sm'
-                  : 'border-slate-200 bg-white text-slate-600'
-              }`}
-            >
-              {area.label}
-            </button>
-          ))}
+    <main class="mx-auto max-w-lg p-3">
+        <!-- エリアフィルター -->
+        <div id="area-filters" class="no-scrollbar mb-4 flex gap-2 overflow-x-auto py-1">
+            <!-- JavaScriptで生成 -->
         </div>
 
-        {/* Date Selector */}
-        <div className="mb-4 rounded-2xl bg-white p-4 shadow-sm">
-          <div className="mb-2 flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400">日付で絞り込む</span>
-            {selectedDate && (
-              <button 
-                onClick={() => setSelectedDate(null)}
-                className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded"
-              >
-                解除
-              </button>
-            )}
-          </div>
-          <div className="grid grid-cols-4 gap-2">
-            {dates.map(date => (
-              <button
-                key={date}
-                onClick={() => setSelectedDate(date)}
-                className={`rounded-lg py-2 text-xs transition-all ${
-                  selectedDate === date
-                    ? 'bg-blue-600 text-white font-bold shadow-inner'
-                    : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
-                }`}
-              >
-                {date}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Event List */}
-        <div className="space-y-3">
-          {filteredEvents.length > 0 ? (
-            filteredEvents.map(event => (
-              <div
-                key={event.id}
-                onClick={() => window.open(event.url, '_blank')}
-                className="group relative overflow-hidden rounded-xl bg-white p-4 shadow-sm transition-all active:scale-[0.98] active:bg-slate-50 border-l-4 border-l-transparent"
-                style={{ borderLeftColor: event.color.replace('bg-', '') }}
-              >
-                <div className="mb-2 flex items-center justify-between">
-                  <span className={`rounded-md px-2 py-0.5 text-[10px] font-bold text-white ${event.color}`}>
-                    {event.tag}
-                  </span>
-                  <div className="flex items-center gap-1 text-[11px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full">
-                    <Calendar size={12} />
-                    {event.displayDate}
-                  </div>
-                </div>
-                <h3 className="mb-2 text-base font-bold text-slate-800 leading-tight">
-                  {event.title}
-                </h3>
-                <div className="mb-2 flex items-center gap-1 rounded-md bg-blue-50 px-2 py-1 text-xs font-bold text-blue-700">
-                  <MapPin size={14} />
-                  {event.location}
-                </div>
-                <p className="text-xs leading-relaxed text-slate-500 line-clamp-2">
-                  {event.description}
-                </p>
-                <div className="mt-2 flex justify-end">
-                   <span className="text-[10px] text-blue-400 flex items-center gap-0.5 italic">
-                     詳細を見る <ExternalLink size={10} />
-                   </span>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="py-20 text-center">
-              <Info className="mx-auto mb-2 text-slate-300" size={32} />
-              <p className="text-sm text-slate-400">該当するイベントがありません</p>
+        <!-- 週間カレンダー -->
+        <div class="mb-4 rounded-2xl bg-white p-4 shadow-sm border border-slate-100">
+            <div class="mb-3 flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-400 flex items-center gap-1">
+                    🕒 開催日で絞り込む
+                </span>
+                <button onclick="selectDate(null)" class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md">
+                    全日程
+                </button>
             </div>
-          )}
+            <div id="calendar-grid" class="flex justify-between gap-1">
+                <!-- JavaScriptで生成 -->
+            </div>
         </div>
-      </main>
 
-      {/* Footer Info for Mobile User */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white/80 p-3 text-center backdrop-blur-md border-t border-slate-100">
-        <p className="text-[10px] text-slate-400 mb-1">iPhoneで「ホーム画面に追加」ができない場合：</p>
-        <p className="text-[10px] text-slate-500 font-bold">右上の「全画面表示（↗️）」ボタンを押してから共有してください</p>
-      </div>
+        <!-- イベントリスト -->
+        <div class="space-y-3">
+            <div class="flex items-center justify-between px-1">
+                <h2 id="list-title" class="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    おすすめのイベント
+                </h2>
+                <span id="event-count" class="text-[10px] text-slate-400">0件</span>
+            </div>
+            <div id="event-list" class="space-y-3">
+                <!-- JavaScriptで生成 -->
+            </div>
+        </div>
+    </main>
+
+    <div class="fixed bottom-0 left-0 right-0 bg-white/90 p-4 text-center backdrop-blur-lg border-t border-slate-100 z-50">
+        <button onclick="location.reload()" class="w-full max-w-xs bg-slate-800 text-white py-3 rounded-xl text-sm font-bold shadow-lg active:scale-95 transition-all mx-auto block">
+            情報を最新に更新する
+        </button>
     </div>
-  );
-}
+
+    <script>
+        const eventsDatabase = [
+            { id: 1, title: "恐竜ワールド・探検ツアー", location: "東京たま未来メッセ", area: "hachioji", month: 5, days: [2, 3, 4, 5, 6], tag: "大型", color: "bg-red-500", url: "https://www.google.com/search?q=東京たま未来メッセ+イベント" },
+            { id: 2, title: "フラワーフェスティバル", location: "国営昭和記念公園", area: "tachikawa", month: 5, days: [2, 3, 4, 5, 6, 7, 8, 9, 10], tag: "自然", color: "bg-green-500", url: "https://www.showakinen-koen.jp/" },
+            { id: 3, title: "レゴ®ワークショップ", location: "ららぽーと立川立飛", area: "tachikawa", month: 5, days: [3, 4, 5, 6, 10, 11], tag: "体験", color: "bg-blue-500", url: "https://mitsui-shopping-park.com/lalaport/tachikawa/" },
+            { id: 4, title: "ドームシアター：海の旅", location: "イオンモール多摩平の森", area: "tamadaira", month: 5, days: [2, 3, 9, 10], tag: "映像", color: "bg-teal-500", url: "https://tamadairanomori-aeonmall.com/" },
+            { id: 5, title: "はたらく車展示会", location: "アリオ橋本", area: "hashimoto", month: 5, days: [3, 4, 10], tag: "乗物", color: "bg-orange-500", url: "https://hashimoto.ario.jp/" },
+            { id: 6, title: "ファミリーサーカス", location: "昭島モリタウン", area: "akishima", month: 5, days: [5, 6], tag: "ショー", color: "bg-purple-500", url: "https://www.moritown.com/" },
+            { id: 7, title: "わくわく工作教室", location: "三井アウトレット 多摩南大沢", area: "hachioji", month: 5, days: [3, 4, 5, 10], tag: "体験", color: "bg-amber-600", url: "https://mitsui-shopping-park.com/mop/tama/" },
+            { id: 8, title: "サンリオグリーティング", location: "多摩センター駅前", area: "tama", month: 5, days: [2, 5, 9], tag: "キッズ", color: "bg-pink-500", url: "https://www.puroland.jp/" },
+            { id: 9, title: "青空ジャズライブ", location: "GREEN SPRINGS 立川", area: "tachikawa", month: 5, days: [2, 3, 9, 10], tag: "音楽", color: "bg-indigo-500", url: "https://greensprings.jp/" }
+        ];
+
+        const areas = [
+            { id: 'all', label: 'すべて' },
+            { id: 'hachioji', label: '八王子・南大沢' },
+            { id: 'tachikawa', label: '立川・公園' },
+            { id: 'tama', label: '多摩センター' },
+            { id: 'tamadaira', label: '多摩平' },
+            { id: 'hashimoto', label: '橋本' },
+        ];
+
+        let selectedArea = 'all';
+        let selectedDate = null;
+        let weekDates = [];
+
+        function init() {
+            const today = new Date();
+            for (let i = 0; i < 8; i++) {
+                const d = new Date(today);
+                d.setDate(today.getDate() + i);
+                weekDates.push({
+                    month: d.getMonth() + 1,
+                    day: d.getDate(),
+                    label: (d.getMonth() + 1) + '/' + d.getDate(),
+                    dayOfWeek: ['日', '月', '火', '水', '木', '金', '土'][d.getDay()]
+                });
+            }
+            renderFilters();
+            renderCalendar();
+            renderEvents();
+        }
+
+        function renderFilters() {
+            const container = document.getElementById('area-filters');
+            container.innerHTML = areas.map(area => `
+                <button onclick="selectArea('${area.id}')" id="area-${area.id}" 
+                class="area-btn whitespace-nowrap rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-500 shadow-sm transition-all active:scale-95">
+                    ${area.label}
+                </button>
+            `).join('');
+            document.getElementById('area-' + selectedArea).classList.add('active-area');
+        }
+
+        function renderCalendar() {
+            const container = document.getElementById('calendar-grid');
+            container.innerHTML = weekDates.map((date, idx) => `
+                <button onclick="selectDateByIndex(${idx})" id="date-${idx}" 
+                class="date-btn flex flex-1 flex-col items-center rounded-xl py-2 bg-slate-50 text-slate-400 transition-all">
+                    <span class="text-[8px] mb-1">${date.dayOfWeek}</span>
+                    <span class="text-sm font-black">${date.day}</span>
+                </button>
+            `).join('');
+        }
+
+        function renderEvents() {
+            const list = document.getElementById('event-list');
+            const filtered = eventsDatabase.filter(event => {
+                const areaMatch = selectedArea === 'all' || event.area === selectedArea;
+                let dateMatch = false;
+                if (!selectedDate) {
+                    dateMatch = weekDates.some(wd => event.month === wd.month && event.days.includes(wd.day));
+                } else {
+                    dateMatch = event.month === selectedDate.month && event.days.includes(selectedDate.day);
+                }
+                return areaMatch && dateMatch;
+            });
+
+            document.getElementById('event-count').innerText = filtered.length + '件';
+            document.getElementById('list-title').innerText = selectedDate ? selectedDate.label + 'のイベント' : 'おすすめのイベント';
+
+            if (filtered.length === 0) {
+                list.innerHTML = `
+                    <div class="py-20 text-center bg-white rounded-2xl border border-dashed border-slate-200">
+                        <p class="text-sm text-slate-400 font-bold">イベントが見つかりませんでした</p>
+                    </div>`;
+                return;
+            }
+
+            list.innerHTML = filtered.map(event => `
+                <div onclick="window.open('${event.url}', '_blank')" class="relative overflow-hidden rounded-2xl bg-white shadow-sm border border-slate-100 transition-all active:scale-[0.98]">
+                    <div class="h-1.5 w-full ${event.color}"></div>
+                    <div class="p-4">
+                        <div class="mb-2 flex items-center justify-between">
+                            <span class="rounded-md px-2 py-0.5 text-[9px] font-bold text-white ${event.color}">${event.tag}</span>
+                            <span class="text-[10px] font-bold text-blue-600">詳細を確認 〉</span>
+                        </div>
+                        <h3 class="mb-2 text-base font-bold text-slate-800 leading-tight">${event.title}</h3>
+                        <div class="flex items-center gap-1.5 rounded-lg bg-slate-50 px-2.5 py-1.5 text-xs font-bold text-slate-600">
+                            📍 ${event.location}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        window.selectArea = function(id) {
+            selectedArea = id;
+            document.querySelectorAll('.area-btn').forEach(b => b.classList.remove('active-area'));
+            document.getElementById('area-' + id).classList.add('active-area');
+            renderEvents();
+        };
+
+        window.selectDateByIndex = function(idx) {
+            selectedDate = weekDates[idx];
+            document.querySelectorAll('.date-btn').forEach(b => b.classList.remove('active-date'));
+            document.getElementById('date-' + idx).classList.add('active-date');
+            renderEvents();
+        };
+
+        window.selectDate = function(val) {
+            selectedDate = val;
+            if (!val) document.querySelectorAll('.date-btn').forEach(b => b.classList.remove('active-date'));
+            renderEvents();
+        };
+
+        init();
+    </script>
+</body>
+</html>
